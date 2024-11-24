@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loja - PhaserJS</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        let game;
+
+        const config = {
+            type: Phaser.AUTO,
+            scale: {
+                mode: Phaser.Scale.RESIZE,
+                autoCenter: Phaser.Scale.CENTER_BOTH
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+        const player = { coins: 100 }
+        const items = [
+            { id: 1, name: 'Espada', price: 50 },
+            { id: 2, name: 'Escudo', price: 30 },
+            { id: 3, name: 'Poção', price: 10 }
+        ];
+
+        let playerCoinsText;
+        let feedbackText;
+
+        window.onload = () => {
+            game = new Phaser.Game(config);
+        };
+
+        function preload() {
+          
+        }
+
+        function create() {
+          
+            this.add.text(20, 20, 'Bem-vindo à Loja!', { font: '24px Arial', fill: '#fff' });
+
+            playerCoinsText = this.add.text(20, 60, `Suas moedas: ${player.coins}`, { font: '18px Arial', fill: '#fff' });
+
+            items.forEach((item, index) => {
+                const button = this.add.text(20, 120 + index * 40, `${item.name} - ${item.price} moedas`, {
+                    font: '18px Arial',
+                    fill: '#fff',
+                    backgroundColor: '#000',
+                    padding: { x: 10, y: 5 }
+                })
+                .setInteractive()
+                .on('pointerover', () => button.setStyle({ fill: '#ff0' }))
+                .on('pointerout', () => button.setStyle({ fill: '#fff' }))
+                .on('pointerdown', () => handlePurchase(item));
+            });
+
+            feedbackText = this.add.text(20, 300, '', { font: '18px Arial', fill: '#fff' });
+
+            this.scale.on('resize', resize, this);
+        }
+
+        function update() {}
+
+        async function handlePurchase(item) {
+           
+            const response = await fetch(`http://localhost:8000/shop.php?item=${item.id}&coins=${player.coins}`);
+            const data = await response.json();
+
+            if (data.success) {
+                player.coins = data.remaining_coins;
+                feedbackText.setText(`Você comprou: ${data.item.name}`);
+            } else {
+                feedbackText.setText(`Erro: ${data.error}`);
+            }
+
+            playerCoinsText.setText(`Suas moedas: ${player.coins}`);
+        }
+
+        function resize(gameSize) {
+            if (!gameSize) return;
+
+            const { width, height } = gameSize;
+            this.cameras.resize(width, height);
+        }
+    </script>
+</body>
+</html>
